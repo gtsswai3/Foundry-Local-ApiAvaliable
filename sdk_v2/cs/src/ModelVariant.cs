@@ -7,6 +7,7 @@
 namespace Microsoft.AI.Foundry.Local;
 
 using Microsoft.AI.Foundry.Local.Detail;
+using Microsoft.AI.Foundry.Local.Providers;
 using Microsoft.Extensions.Logging;
 
 public class ModelVariant : IModel
@@ -67,6 +68,12 @@ public class ModelVariant : IModel
 
     public async Task LoadAsync(CancellationToken? ct = null)
     {
+        // API provider models don't need to be loaded
+        if (Info.ApiProviderConfig != null)
+        {
+            return;
+        }
+
         await Utils.CallWithExceptionHandling(() => _modelLoadManager.LoadAsync(Id, ct),
                                               "Error loading model", _logger)
                                              .ConfigureAwait(false);
@@ -74,6 +81,12 @@ public class ModelVariant : IModel
 
     public async Task UnloadAsync(CancellationToken? ct = null)
     {
+        // API provider models don't need to be unloaded
+        if (Info.ApiProviderConfig != null)
+        {
+            return;
+        }
+
         await Utils.CallWithExceptionHandling(() => _modelLoadManager.UnloadAsync(Id, ct),
                                               "Error unloading model", _logger)
                                              .ConfigureAwait(false);
@@ -102,18 +115,38 @@ public class ModelVariant : IModel
 
     private async Task<bool> IsLoadedImplAsync(CancellationToken? ct = null)
     {
+        // API provider models are always "loaded" since they don't need local loading
+        if (Info.ApiProviderConfig != null)
+        {
+            return true;
+        }
+
         var loadedModels = await _modelLoadManager.ListLoadedModelsAsync(ct).ConfigureAwait(false);
         return loadedModels.Contains(Id);
     }
 
     private async Task<bool> IsCachedImplAsync(CancellationToken? ct = null)
     {
+        // API provider models don't use local cache
+        if (Info.ApiProviderConfig != null)
+        {
+            return false;
+        }
+
         var cachedModelIds = await Utils.GetCachedModelIdsAsync(_coreInterop, ct).ConfigureAwait(false);
         return cachedModelIds.Contains(Id);
     }
 
     private async Task<string> GetPathImplAsync(CancellationToken? ct = null)
     {
+        // API provider models don't have a local path
+        if (Info.ApiProviderConfig != null)
+        {
+            throw new FoundryLocalException(
+                $"Model {Id} is an API provider model and does not have a local path.",
+                _logger);
+        }
+
         var request = new CoreInteropRequest { Params = new Dictionary<string, string> { { "Model", Id } } };
         var result = await _coreInterop.ExecuteCommandAsync("get_model_path", request, ct).ConfigureAwait(false);
         if (result.Error != null)
@@ -129,6 +162,14 @@ public class ModelVariant : IModel
     private async Task DownloadImplAsync(Action<float>? downloadProgress = null,
                                          CancellationToken? ct = null)
     {
+        // API provider models don't need to be downloaded
+        if (Info.ApiProviderConfig != null)
+        {
+            throw new FoundryLocalException(
+                $"Model {Id} is an API provider model and does not need to be downloaded.",
+                _logger);
+        }
+
         var request = new CoreInteropRequest
         {
             Params = new() { { "Model", Id } }
@@ -162,6 +203,14 @@ public class ModelVariant : IModel
 
     private async Task RemoveFromCacheImplAsync(CancellationToken? ct = null)
     {
+        // API provider models don't have a local cache
+        if (Info.ApiProviderConfig != null)
+        {
+            throw new FoundryLocalException(
+                $"Model {Id} is an API provider model and does not have a local cache to remove.",
+                _logger);
+        }
+
         var request = new CoreInteropRequest { Params = new Dictionary<string, string> { { "Model", Id } } };
 
         var result = await _coreInterop.ExecuteCommandAsync("remove_cached_model", request, ct).ConfigureAwait(false);
@@ -173,6 +222,16 @@ public class ModelVariant : IModel
 
     private async Task<OpenAIChatClient> GetChatClientImplAsync(CancellationToken? ct = null)
     {
+        // Check if this model uses an external API provider
+        var apiProviderClient = ApiProviderChatClientFactory.Create(Info, _logger);
+
+        if (apiProviderClient != null)
+        {
+            // For API providers, we don't need to load the model
+            return new OpenAIChatClient(Id, apiProviderClient);
+        }
+
+        // For local models, ensure the model is loaded
         if (!await IsLoadedAsync(ct))
         {
             throw new FoundryLocalException($"Model {Id} is not loaded. Call LoadAsync first.");
@@ -183,6 +242,14 @@ public class ModelVariant : IModel
 
     private async Task<OpenAIAudioClient> GetAudioClientImplAsync(CancellationToken? ct = null)
     {
+        // Audio transcription is currently not supported for API provider models
+        if (Info.ApiProviderConfig != null)
+        {
+            throw new FoundryLocalException(
+                $"Model {Id} is an API provider model. Audio transcription is currently only supported for local models.",
+                _logger);
+        }
+
         if (!await IsLoadedAsync(ct))
         {
             throw new FoundryLocalException($"Model {Id} is not loaded. Call LoadAsync first.");

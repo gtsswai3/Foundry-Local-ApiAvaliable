@@ -51,6 +51,33 @@ public class Configuration
     public IDictionary<string, string>? AdditionalSettings { get; init; }
 
     /// <summary>
+    /// Configuration for external API model providers (OpenAPI-compatible or Claude-compatible).
+    /// Key is the provider identifier, value is the provider configuration.
+    /// </summary>
+    public IDictionary<string, ApiProviderSettings>? ApiProviders { get; init; }
+
+    /// <summary>
+    /// Settings for an external API model provider.
+    /// </summary>
+    public class ApiProviderSettings
+    {
+        /// <summary>
+        /// The host URL for the API provider (e.g., "https://api.openai.com" or "https://api.anthropic.com").
+        /// </summary>
+        public required string Host { get; init; }
+
+        /// <summary>
+        /// The API token for authentication with the provider.
+        /// </summary>
+        public required string ApiToken { get; init; }
+
+        /// <summary>
+        /// The provider type: "openai" for OpenAPI-compatible, "claude" for Claude-compatible.
+        /// </summary>
+        public required string ProviderType { get; init; }
+    }
+
+    /// <summary>
     /// Configuration settings if the optional web service is used.
     /// </summary>
     public class WebService
