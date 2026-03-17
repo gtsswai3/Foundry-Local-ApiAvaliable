@@ -15,22 +15,28 @@ using Betalgo.Ranul.OpenAI.ObjectModels.ResponseModels;
 
 using Microsoft.AI.Foundry.Local.Detail;
 using Microsoft.AI.Foundry.Local.OpenAI;
+using Microsoft.AI.Foundry.Local.Providers;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Chat Client that uses the OpenAI API.
 /// Implemented using Betalgo.Ranul.OpenAI SDK types.
+/// Supports both local models and external API providers.
 /// </summary>
 public class OpenAIChatClient
 {
     private readonly string _modelId;
+    private readonly IApiProviderChatClient? _apiProviderClient;
+    private readonly bool _isApiProvider;
 
     private readonly ICoreInterop _coreInterop = FoundryLocalManager.Instance.CoreInterop;
     private readonly ILogger _logger = FoundryLocalManager.Instance.Logger;
 
-    internal OpenAIChatClient(string modelId)
+    internal OpenAIChatClient(string modelId, IApiProviderChatClient? apiProviderClient = null)
     {
         _modelId = modelId;
+        _apiProviderClient = apiProviderClient;
+        _isApiProvider = apiProviderClient != null;
     }
 
     /// <summary>
@@ -130,6 +136,13 @@ public class OpenAIChatClient
                                                                            IEnumerable<ToolDefinition>? tools,
                                                                            CancellationToken? ct)
     {
+        // If this is an API provider model, route to the provider client
+        if (_isApiProvider && _apiProviderClient != null)
+        {
+            return await _apiProviderClient.CompleteChatAsync(messages, tools, Settings, ct);
+        }
+
+        // Otherwise, use the local model via CoreInterop
         Settings.Stream = false;
 
         var chatRequest = ChatCompletionCreateRequestExtended.FromUserInput(_modelId, messages, tools, Settings);
@@ -148,6 +161,17 @@ public class OpenAIChatClient
                                                                                         IEnumerable<ToolDefinition>? tools,
                                                                                         [EnumeratorCancellation] CancellationToken ct)
     {
+        // If this is an API provider model, route to the provider client
+        if (_isApiProvider && _apiProviderClient != null)
+        {
+            await foreach (var item in _apiProviderClient.CompleteChatStreamingAsync(messages, tools, Settings, ct))
+            {
+                yield return item;
+            }
+            yield break;
+        }
+
+        // Otherwise, use the local model via CoreInterop
         Settings.Stream = true;
 
         var chatRequest = ChatCompletionCreateRequestExtended.FromUserInput(_modelId, messages, tools, Settings);

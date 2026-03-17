@@ -54,6 +54,18 @@ public record ModelSettings
     public Parameter[]? Parameters { get; set; }
 }
 
+public record ApiProviderConfig
+{
+    [JsonPropertyName("host")]
+    public string? Host { get; init; }
+
+    [JsonPropertyName("apiToken")]
+    public string? ApiToken { get; init; }
+
+    [JsonPropertyName("modelName")]
+    public string? ModelName { get; init; }
+}
+
 public record ModelInfo
 {
     [JsonPropertyName("id")]
@@ -119,4 +131,7 @@ public record ModelInfo
 
     [JsonPropertyName("createdAt")]
     public long CreatedAtUnix { get; init; }
+
+    [JsonPropertyName("apiProviderConfig")]
+    public ApiProviderConfig? ApiProviderConfig { get; init; }
 }

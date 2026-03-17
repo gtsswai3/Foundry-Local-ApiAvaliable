@@ -7,6 +7,7 @@
 namespace Microsoft.AI.Foundry.Local;
 
 using Microsoft.AI.Foundry.Local.Detail;
+using Microsoft.AI.Foundry.Local.Providers;
 using Microsoft.Extensions.Logging;
 
 public class ModelVariant : IModel
@@ -173,6 +174,16 @@ public class ModelVariant : IModel
 
     private async Task<OpenAIChatClient> GetChatClientImplAsync(CancellationToken? ct = null)
     {
+        // Check if this model uses an external API provider
+        var apiProviderClient = ApiProviderChatClientFactory.Create(Info, _logger);
+
+        if (apiProviderClient != null)
+        {
+            // For API providers, we don't need to load the model
+            return new OpenAIChatClient(Id, apiProviderClient);
+        }
+
+        // For local models, ensure the model is loaded
         if (!await IsLoadedAsync(ct))
         {
             throw new FoundryLocalException($"Model {Id} is not loaded. Call LoadAsync first.");
