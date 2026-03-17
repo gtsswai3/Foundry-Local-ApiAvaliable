@@ -1,4 +1,19 @@
 /**
+ * API format for the web service endpoints.
+ */
+export enum ApiFormat {
+    /**
+     * OpenAI-compatible API format (default).
+     */
+    OpenAI = 'OpenAI',
+
+    /**
+     * Claude (Anthropic) API format.
+     */
+    Claude = 'Claude'
+}
+
+/**
  * Configuration options for the Foundry Local SDK.
  * Use a plain object with these properties to configure the SDK.
  */
@@ -40,6 +55,12 @@ export interface FoundryLocalConfig {
      * Example: "http://127.0.0.1:8080"
      */
     webServiceUrls?: string;
+
+    /**
+     * API format to use for the web service endpoints.
+     * Optional. Defaults to ApiFormat.OpenAI (OpenAI-compatible API)
+     */
+    webServiceApiFormat?: ApiFormat;
 
     /**
      * The external URL if the web service is running in a separate process.
@@ -93,6 +114,7 @@ export class Configuration {
         if (config.logsDir) this.params['LogsDir'] = config.logsDir;
         if (config.logLevel) this.params['LogLevel'] = LOG_LEVEL_MAP[config.logLevel] || config.logLevel;
         if (config.webServiceUrls) this.params['WebServiceUrls'] = config.webServiceUrls;
+        if (config.webServiceApiFormat) this.params['WebServiceApiFormat'] = config.webServiceApiFormat;
         if (config.serviceEndpoint) this.params['WebServiceExternalUrl'] = config.serviceEndpoint;
         if (config.libraryPath) this.params['FoundryLocalCorePath'] = config.libraryPath;
 

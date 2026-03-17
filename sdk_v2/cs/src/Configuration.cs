@@ -6,6 +6,22 @@
 
 namespace Microsoft.AI.Foundry.Local;
 
+/// <summary>
+/// API format for the web service endpoints.
+/// </summary>
+public enum ApiFormat
+{
+    /// <summary>
+    /// OpenAI-compatible API format (default).
+    /// </summary>
+    OpenAI,
+
+    /// <summary>
+    /// Claude (Anthropic) API format.
+    /// </summary>
+    Claude
+}
+
 public class Configuration
 {
     /// <summary>
@@ -58,11 +74,17 @@ public class Configuration
         /// <summary>
         /// Url/s to bind to the web service when <see cref="FoundryLocalManager.StartWebServiceAsync"/> is called.
         /// After startup, <see cref="FoundryLocalManager.Urls"/> will contain the actual URL/s the service is listening on.
-        /// 
+        ///
         /// Default: 127.0.0.1:0, which binds to a random ephemeral port.
         /// Multiple URLs can be specified as a semi-colon separated list.
         /// </summary>
         public string? Urls { get; init; }
+
+        /// <summary>
+        /// API format to use for the web service endpoints.
+        /// Default: ApiFormat.OpenAI (OpenAI-compatible API)
+        /// </summary>
+        public ApiFormat ApiFormat { get; init; } = ApiFormat.OpenAI;
 
         /// <summary>
         /// If the web service is running in a separate process, it will be accessed using this URI.
@@ -128,6 +150,7 @@ public class Configuration
             {
                 configValues["WebServiceUrls"] = Web.Urls;
             }
+            configValues["WebServiceApiFormat"] = Web.ApiFormat.ToString();
         }
 
         // Emit any additional settings.

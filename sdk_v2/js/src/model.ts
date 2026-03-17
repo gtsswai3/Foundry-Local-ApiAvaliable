@@ -2,6 +2,7 @@ import { ModelVariant } from './modelVariant.js';
 import { ChatClient } from './openai/chatClient.js';
 import { AudioClient } from './openai/audioClient.js';
 import { ResponsesClient } from './openai/responsesClient.js';
+import { ClaudeClient } from './claude/claudeClient.js';
 import { IModel } from './imodel.js';
 
 /**
@@ -138,6 +139,14 @@ export class Model implements IModel {
      */
     public createChatClient(): ChatClient {
         return this.selectedVariant.createChatClient();
+    }
+
+    /**
+     * Creates a ClaudeClient for interacting with the model using Claude API format.
+     * @returns A ClaudeClient instance.
+     */
+    public createClaudeClient(): ClaudeClient {
+        return this.selectedVariant.createClaudeClient();
     }
 
     /**

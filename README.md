@@ -23,6 +23,7 @@ Foundry Local lets you embed generative AI directly into your applications — n
 Key benefits include:
 
 - **Self-contained SDK** — Ship AI features without requiring users to install any external dependencies.
+- **Multiple API formats** — Supports both OpenAI-compatible and Claude (Anthropic) API formats for maximum flexibility.
 - **Chat AND Audio in one runtime** — Text generation and speech-to-text (Whisper) through a single SDK — no need for separate tools like `whisper.cpp` + `llama.cpp`.
 - **Easy-to-use CLI** — Explore models and experiment locally before integrating with your app.
 - **Optimized models out-of-the-box** — State-of-the-art quantization and compression deliver both performance and quality.
@@ -241,6 +242,42 @@ await whisperModel.unload();
 
 > [!TIP]
 > A single `FoundryLocalManager` can manage both chat and audio models simultaneously. See the [chat-and-audio sample](samples/js/chat-and-audio-foundry-local/) for a complete example that transcribes audio then analyzes it with a chat model.
+
+## API Format Support
+
+Foundry Local supports two API formats for maximum flexibility:
+
+1. **OpenAI-compatible API** (default) - Use with existing OpenAI SDK integrations
+2. **Claude (Anthropic) API** - Native Claude Messages API format
+
+### Quick Example
+
+```javascript
+import { FoundryLocalManager, ApiFormat } from 'foundry-local-sdk';
+
+// Configure with your preferred API format
+const manager = FoundryLocalManager.create({
+    appName: 'my-app',
+    webServiceApiFormat: ApiFormat.Claude  // or ApiFormat.OpenAI
+});
+
+const model = await manager.catalog.getModel('qwen2.5-0.5b');
+await model.load();
+
+// Use Claude API format
+const claudeClient = model.createClaudeClient();
+const response = await claudeClient.createMessage([
+    { role: 'user', content: 'What is the golden ratio?' }
+]);
+
+// Or use OpenAI format
+const openAIClient = model.createChatClient();
+const openAIResponse = await openAIClient.completeChat([
+    { role: 'user', content: 'What is the golden ratio?' }
+]);
+```
+
+For detailed information about API formats, see the [API Formats Documentation](docs/API_FORMATS.md).
 
 ## Manage
 
