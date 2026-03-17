@@ -277,7 +277,10 @@ const openAIResponse = await openAIClient.completeChat([
 ]);
 ```
 
-For detailed information about API formats, see the [API Formats Documentation](docs/API_FORMATS.md).
+For detailed information about API formats, see:
+- [API Formats Documentation](docs/API_FORMATS.md) - Complete guide to both OpenAI and Claude API formats
+- [OpenAPI Configuration Guide](docs/OPENAPI_CONFIG.md) - How to configure OpenAPI-compatible APIs
+- [OpenAPI 配置指南（中文）](docs/OPENAPI_CONFIG_CN.md) - OpenAPI 兼容配置说明
 
 ## Manage
 
